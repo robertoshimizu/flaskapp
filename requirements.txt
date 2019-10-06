@@ -1,0 +1,14 @@
+flask
+itsdangerous
+Jinja2
+lxml
+MarkupSafe
+Werkzeug
+wheel
+psycopg2
+psycopg2-binary
+flask-sqlalchemy
+gunicorn
+flask-mysqldb
+Flask-WTF
+passlib
