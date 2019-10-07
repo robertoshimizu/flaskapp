@@ -1,4 +1,5 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, request, logging
+from functools import wraps
 from data import Articles
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
@@ -18,27 +19,27 @@ mysql = MySQL(app)
 
 Articles = Articles()
 
-
+# Index
 @app.route('/')
 def index():
     return render_template('home.html')
 
-
+# About
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-
+# All articles
 @app.route('/articles')
 def articles():
     return render_template('articles.html', articles=Articles)
 
-
+# Single Article
 @app.route('/article/<string:id>/')
 def article(id):
     return render_template('article.html', id=id)
 
-
+# Register Form Class from WTForms
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=50)])
     username = StringField('Username', [validators.Length(min=4, max=25)])
@@ -49,7 +50,7 @@ class RegisterForm(Form):
     ])
     confirm = PasswordField('Confirm Password')
 
-
+# User Register
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm(request.form)
@@ -78,7 +79,6 @@ def register():
     return render_template('register.html', form=form)
 
 # User Login
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -92,22 +92,64 @@ def login():
         # Get user by username
         result = cur.execute("SELECT * FROM users WHERE username = %s",[username])
 
+        # if user found
         if result>0:
             # Get stored hash
             data = cur.fetchone()
             password = data['password']
+            name = data['name']
 
             # Compare passwords
             if sha256_crypt.verify(password_candidate, password):
+                # Passed
                 app.logger.info('PASSWORD MATCHED')
+                session['logged_in'] = True
+                session['username'] = username
+                session['name'] = name
+
+                flash('You are now logged in', 'success')
+                return redirect(url_for('dashboard'))
+
             else:
+                # Not passed
                 app.logger.info('PASSWORD NOT MATCHED')
+                error = 'Invalid password'
+                return render_template('login.html', error=error)
+
+            # close database connection
+            cur.close()
+
+        # if user not found        
         else:
             app.logger.info('NO USER')
+            error = 'Username not found'
+            return render_template('login.html', error=error)
 
-    return render_template('login.html')    
+    return render_template('login.html')
 
+# Check if user is logged_in - Decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorized, Please login', 'danger')
+            return redirect(url_for('login'))
+    return decorated_function
 
+# Logout
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You are now logged out', 'success')
+    return redirect(url_for('index'))
+ 
+# Dashboard
+@app.route('/dashboard')
+@login_required # going to check and use a function in decorator above
+def dashboard():
+    return render_template('dashboard.html')
 
 if __name__ == '__main__':
 
