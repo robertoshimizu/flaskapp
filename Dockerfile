@@ -2,8 +2,6 @@ FROM python:3.7-slim-buster
 
 RUN apt-get update && apt-get install -y libpq-dev gcc
 
-
-
 LABEL maintainer "Roberto Shimizu"
 
 RUN mkdir -p /usr/src/app
