@@ -2,6 +2,8 @@
 
 This application is built on the Python Flask framework and is the focus for the "Python Flask From Scratch" YouTube series
 
+https://www.youtube.com/watch?v=zRwy8gtgJ1A&t=5s
+
 To start, clone the git, and build your image using docker compose
 
 ```
