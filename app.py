@@ -150,7 +150,21 @@ def logout():
 @app.route('/dashboard')
 @login_required # going to check and use a function in decorator above
 def dashboard():
-    return render_template('dashboard.html')
+    # Create Cursor to fetch all articles in the database
+    cur = mysql.connection.cursor()
+
+    # Get articles
+    result = cur.execute("SELECT * FROM articles")
+
+    articles = cur.fetchall()
+
+    if result > 0:
+        return render_template('dashboard.html', articles=articles)
+    else:
+        msg = 'No Articles Found'
+        return render_template('dashboard.html', msg=msg)
+    # Close Connectiom
+    cur.close()
 
 # Article Form Class from WTForms
 class ArticleForm(Form):
